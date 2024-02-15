@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO App</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">TODO App</h1>
+
+        <ul id="taskList" class="task-list mt-4"></ul>
+
+        <div class="input-group mt-3">
+            <input type="text" id="taskInput" class="form-control" placeholder="Add a new task">
+            <div class="input-group-append">
+                <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery (required for Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+        function addTask() {
+            var title = document.getElementById("taskInput").value;
+
+            if (!title) {
+                alert("Please enter a task title");
+                return;
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "http://localhost:9090/tasks", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 201) {
+                    getTasks();
+                }
+            };
+
+            var task = {
+                title: title,
+                completed: false
+            };
+
+            xhr.send(JSON.stringify(task));
+        }
+
+        function deleteTask(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("DELETE", "http://localhost:9090/tasks/" + id, true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 204) {
+                    getTasks();
+                }
+            };
+
+            xhr.send(); 
+        }
+
+        function getTasks() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "http://localhost:9090/tasks", true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tasks = JSON.parse(xhr.responseText);
+                    displayTasks(tasks);
+                }
+            };
+
+            xhr.send();
+        }
+
+        function displayTasks(tasks) {
+            var taskList = document.getElementById("taskList");
+            taskList.innerHTML = "";
+
+            tasks.forEach(function (task) {
+                var listItem = document.createElement("li");
+                listItem.className = "task-item";
+
+                var taskTitle = document.createElement("span");
+                taskTitle.textContent = task.title;
+
+                var deleteButton = document.createElement("button");
+                deleteButton.className = "btn btn-danger";
+                deleteButton.textContent = "Delete";
+                deleteButton.onclick = function() {
+                    deleteTask(task.id);
+                };
+
+                listItem.appendChild(taskTitle);
+                listItem.appendChild(deleteButton);
+                taskList.appendChild(listItem);
+            });
+        }
+
+        // Initial load of tasks
+        getTasks();
+    </script>
+</body>
+</html>
